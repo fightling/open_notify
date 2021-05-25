@@ -3,6 +3,12 @@ name = "open_notify"
 version = "0.1.0"
 authors = ["Patrick Hoffmann <pat@thats-software.com>"]
 edition = "2018"
+description = "fetches information about spotting International Space Station from open-notify.org"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/open_notify"
+homepage = "https://open_notify.thats-software.com"
+keywords = ["open-notify", "ISS", "spot" ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
