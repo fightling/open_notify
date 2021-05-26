@@ -55,7 +55,7 @@ fn main() {
             Some(response) => match response {
                 Ok(spots) => println!(
                     "ISS is {}",
-                    match find_current(spots) {
+                    match find_current(spots,None) {
                         Some(_s) => "visible",
                         None => "invisible",
                     }
@@ -110,7 +110,7 @@ fn main() {
     match &spot(52.520008, 13.404954, 0.0) {
         Ok(spots) => println!(
             "ISS is {}",
-            match find_current(spots) {
+            match find_current(spots,None) {
                 Some(_s) => "visible",
                 None => "invisible",
             }

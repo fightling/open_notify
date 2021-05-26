@@ -36,7 +36,7 @@ struct OpenNotifyResponse {
     response: Vec<Pass>,
 }
 
-#[derive(Copy,Clone)]
+#[derive(Copy, Clone)]
 pub struct Spot {
     pub duration: chrono::Duration,
     pub risetime: chrono::DateTime<chrono::Local>,
@@ -46,7 +46,12 @@ impl Spot {
         self.risetime - chrono::Local::now()
     }
     pub fn is_spottable(&self) -> bool {
-        chrono::Local::now() >= self.risetime && chrono::Local::now() < self.risetime + self.duration
+        chrono::Local::now() >= self.risetime
+            && chrono::Local::now() < self.risetime + self.duration
+    }
+    pub fn is_daytime_utc(&self, sunrise_utc: i64, sunset_utc: i64) -> bool {
+        self.risetime > from_utc_timestamp(sunrise_utc)
+            && self.risetime < from_utc_timestamp(sunset_utc)
     }
 }
 
@@ -55,20 +60,36 @@ pub type Receiver = mpsc::Receiver<Result<Vec<Spot>, String>>;
 /// Loading error messaage you get at the first call of `update()`.
 pub const LOADING: &str = "loading...";
 
-pub fn find_upcoming( spots: &Vec<Spot> ) -> Option<&Spot> {
+pub fn find_upcoming(spots: &Vec<Spot>, daytime_utc: Option<(i64, i64)>) -> Option<&Spot> {
     // count upcoming spots
     for spot in spots {
         if spot.spottable() > chrono::Duration::zero() {
+            match daytime_utc {
+                Some(dt) => {
+                    if spot.is_daytime_utc(dt.0, dt.1) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
             return Some(spot);
         }
     }
     return None;
 }
 
-pub fn find_current( spots: &Vec<Spot> ) -> Option<&Spot> {
+pub fn find_current(spots: &Vec<Spot>, daytime_utc: Option<(i64, i64)>) -> Option<&Spot> {
     // count upcoming spots
     for spot in spots {
         if spot.is_spottable() {
+            match daytime_utc {
+                Some(dt) => {
+                    if spot.is_daytime_utc(dt.0, dt.1) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
             return Some(spot);
         }
     }
@@ -118,12 +139,10 @@ pub fn init(latitude: f64, longitude: f64, altitude: f64, poll_mins: u64) -> Rec
                                 let mut result = Vec::new();
                                 let w: OpenNotifyResponse = w;
                                 for r in w.response {
-                                    result.push( Spot {
-                                        duration: chrono::Duration::seconds(
-                                            r.duration as i64,
-                                        ),
+                                    result.push(Spot {
+                                        duration: chrono::Duration::seconds(r.duration as i64),
                                         risetime: from_utc_timestamp(r.risetime),
-                                    } );
+                                    });
                                 }
                                 tx.send(Ok(result)).unwrap_or(());
                                 if period == time::Duration::new(0, 0) {
