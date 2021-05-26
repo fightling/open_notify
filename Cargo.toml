@@ -1,6 +1,6 @@
 [package]
 name = "open_notify"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Patrick Hoffmann <pat@thats-software.com>"]
 edition = "2018"
 description = "fetches information about spotting International Space Station from open-notify.org"
