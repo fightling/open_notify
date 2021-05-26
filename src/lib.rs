@@ -1,106 +1,24 @@
 extern crate reqwest;
 extern crate serde_json;
 
-use chrono;
 use futures::executor;
 use http::StatusCode;
-use serde::Deserialize;
 use std::sync::mpsc;
 use std::thread;
 use std::time;
 
+mod api;
+mod spot;
+
 #[cfg(test)]
 mod tests;
 
-#[derive(Deserialize, Debug, Copy, Clone)]
-struct Pass {
-    duration: u64,
-    risetime: i64,
-}
-
-#[derive(Deserialize, Debug)]
-struct Request {
-    altitude: f64,
-    datetime: u64,
-    /// geo location, latitude
-    latitude: f64,
-    /// geo location, longitude
-    longitude: f64,
-    passes: u64,
-}
-
-#[derive(Deserialize, Debug)]
-struct OpenNotifyResponse {
-    message: String,
-    request: Request,
-    response: Vec<Pass>,
-}
-
-#[derive(Copy, Clone)]
-pub struct Spot {
-    pub duration: chrono::Duration,
-    pub risetime: chrono::DateTime<chrono::Local>,
-}
-impl Spot {
-    pub fn spottable(&self) -> chrono::Duration {
-        self.risetime - chrono::Local::now()
-    }
-    pub fn is_spottable(&self) -> bool {
-        chrono::Local::now() >= self.risetime
-            && chrono::Local::now() < self.risetime + self.duration
-    }
-    pub fn is_daytime_utc(&self, sunrise_utc: i64, sunset_utc: i64) -> bool {
-        self.risetime > from_utc_timestamp(sunrise_utc)
-            && self.risetime < from_utc_timestamp(sunset_utc)
-    }
-}
+pub use spot::*;
 
 /// Receiver object you get from `init()` and have top handle to `update()`.
 pub type Receiver = mpsc::Receiver<Result<Vec<Spot>, String>>;
 /// Loading error messaage you get at the first call of `update()`.
 pub const LOADING: &str = "loading...";
-
-pub fn find_upcoming(spots: &Vec<Spot>, daytime_utc: Option<(i64, i64)>) -> Option<&Spot> {
-    // count upcoming spots
-    for spot in spots {
-        if spot.spottable() > chrono::Duration::zero() {
-            match daytime_utc {
-                Some(dt) => {
-                    if spot.is_daytime_utc(dt.0, dt.1) {
-                        return None;
-                    }
-                }
-                _ => (),
-            }
-            return Some(spot);
-        }
-    }
-    return None;
-}
-
-pub fn find_current(spots: &Vec<Spot>, daytime_utc: Option<(i64, i64)>) -> Option<&Spot> {
-    // count upcoming spots
-    for spot in spots {
-        if spot.is_spottable() {
-            match daytime_utc {
-                Some(dt) => {
-                    if spot.is_daytime_utc(dt.0, dt.1) {
-                        return None;
-                    }
-                }
-                _ => (),
-            }
-            return Some(spot);
-        }
-    }
-    return None;
-}
-
-fn from_utc_timestamp(t: i64) -> chrono::DateTime<chrono::Local> {
-    let t = chrono::NaiveDateTime::from_timestamp(t, 0);
-    let t: chrono::DateTime<chrono::Utc> = chrono::DateTime::from_utc(t, chrono::Utc);
-    return chrono::DateTime::from(t);
-}
 
 /// Spawns a thread which fetches the current ISS spotting from
 /// [http://api.open-notify.org](https://http://api.open-notify.org) periodically.
@@ -137,10 +55,11 @@ pub fn init(latitude: f64, longitude: f64, altitude: f64, poll_mins: u64) -> Rec
                         match serde_json::from_str(&text) {
                             Ok(w) => {
                                 let mut result = Vec::new();
-                                let w: OpenNotifyResponse = w;
+                                // convert response into Vec<Spot>
+                                let w: api::Response = w;
                                 for r in w.response {
                                     result.push(Spot {
-                                        duration: chrono::Duration::seconds(r.duration as i64),
+                                        duration: Duration::seconds(r.duration as i64),
                                         risetime: from_utc_timestamp(r.risetime),
                                     });
                                 }
