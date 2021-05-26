@@ -42,7 +42,7 @@ impl Spot {
     }
 }
 
-pub fn find_upcoming(spots: &Vec<Spot>, daytime: Option<DayTime>) -> Option<Spot> {
+pub fn find_upcoming(spots: &Vec<Spot>, daytime: &Option<DayTime>) -> Option<Spot> {
     // count upcoming spots
     for spot in spots {
         if spot.risetime > chrono::Local::now() {
@@ -60,7 +60,7 @@ pub fn find_upcoming(spots: &Vec<Spot>, daytime: Option<DayTime>) -> Option<Spot
     return None;
 }
 
-pub fn find_current(spots: &Vec<Spot>, daytime: Option<DayTime>) -> Option<&Spot> {
+pub fn find_current(spots: &Vec<Spot>, daytime: &Option<DayTime>) -> Option<Spot> {
     // count upcoming spots
     for spot in spots {
         if spot.is_spottable() {
@@ -72,7 +72,7 @@ pub fn find_current(spots: &Vec<Spot>, daytime: Option<DayTime>) -> Option<&Spot
                 }
                 _ => (),
             }
-            return Some(spot);
+            return Some(spot.clone());
         }
     }
     return None;
