@@ -88,7 +88,7 @@ fn from_utc_timestamp(t: i64) -> chrono::DateTime<chrono::Local> {
 /// - `longitude`: longitude in decimal degress of the ground station. required Range: -180..180
 /// - `altitude`: altitude in meters of the ground station. optional. Range: 0..10000
 /// - `poll_mins`: Update interval:
-///     - `> 0`: duration of poll period in minutes (`10` is recommended)
+///     - `> 0`: duration of poll period in minutes (`90` is recommended)
 ///     - `= 0`: thread will terminate after the first successful update.
 /// #### Return value
 /// - `open_notify::Receiver`: Handle this to `open_notify::update()` to get the latest ISS spotting update.
@@ -207,7 +207,6 @@ pub mod blocking {
     ///     - `= 0`: thread will terminate after the first successful update.
     /// #### Return value
     /// - ⇒ `Ok(Vec<Spot>)`: vector of upcoming spotting events
-    ///     (see also [*open-notify.org* documentation](https://openweathermap.org/current#parameter) for details)
     /// - ⇒ `Err(String)`: Error message about any occured http or json issue
     ///         - e.g. `500 Internal Server Error"
     ///         - some json parser error message if response from open-notify.org could not be parsed
