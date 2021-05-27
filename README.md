@@ -34,7 +34,7 @@ First add this crate to your dependencies in you `Cargo.toml` file:
 
 ```toml
 [dependencies]
-open_notify = "0.1.5"
+open_notify = "0.1.7"
 ```
 
 ### Get continuous ISS updates
