@@ -39,7 +39,7 @@ pub const LOADING: &str = "loading...";
 pub fn init(latitude: f64, longitude: f64, altitude: f64, poll_mins: u64) -> Receiver {
     // generate correct request URL depending on city is id or name
     let url = format!(
-        "http://api.open-notify.org/iss/v1/?lat={}&lon={}&altitude={}",
+        "http://api.open-notify.org/iss/v1/?lat={}&lon={}&altitude={}&n=10",
         latitude, longitude, altitude
     );
     // fork thread that continuously fetches ISS spotting updates every <poll_mins> minutes

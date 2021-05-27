@@ -48,13 +48,12 @@ pub fn find_upcoming(spots: &Vec<Spot>, daytime: &Option<DayTime>) -> Option<Spo
         if spot.risetime > chrono::Local::now() {
             match daytime {
                 Some(dt) => {
-                    if !spot.at_night(&dt) {
-                        return None;
+                    if spot.at_night(&dt) {
+                        return Some(spot.clone());
                     }
                 }
-                _ => (),
+                _ => return Some(spot.clone()),
             }
-            return Some(spot.clone());
         }
     }
     return None;
@@ -65,14 +64,9 @@ pub fn find_current(spots: &Vec<Spot>, daytime: &Option<DayTime>) -> Option<Spot
     for spot in spots {
         if spot.is_spottable() {
             match daytime {
-                Some(dt) => {
-                    if !spot.at_night(&dt) {
-                        return None;
-                    }
-                }
-                _ => (),
+                Some(dt) => return match spot.at_night(&dt) { true => Some(spot.clone()), _ => None },
+                _ => return Some(spot.clone()),
             }
-            return Some(spot.clone());
         }
     }
     return None;
