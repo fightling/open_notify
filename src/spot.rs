@@ -10,8 +10,8 @@ pub fn from_utc_timestamp(t: i64) -> DateTime {
 }
 
 pub struct DayTime {
-    sunrise: DateTime,
-    sunset: DateTime,
+    pub sunrise: DateTime,
+    pub sunset: DateTime,
 }
 
 impl DayTime {
@@ -33,19 +33,18 @@ pub struct Spot {
 }
 
 impl Spot {
-    pub fn is_spottable(&self) -> bool {
-        chrono::Local::now() >= self.risetime
-            && chrono::Local::now() < self.risetime + self.duration
+    pub fn is_spottable(&self, now: DateTime) -> bool {
+        now >= self.risetime && now < self.risetime + self.duration
     }
     pub fn at_night(&self, daytime: &DayTime) -> bool {
         daytime.at_night(&self.risetime)
     }
 }
 
-pub fn find_upcoming(spots: &Vec<Spot>, daytime: &Option<DayTime>) -> Option<Spot> {
+pub fn find_upcoming(spots: &Vec<Spot>, daytime: Option<&DayTime>, now: DateTime) -> Option<Spot> {
     // count upcoming spots
     for spot in spots {
-        if spot.risetime > chrono::Local::now() {
+        if spot.risetime > now {
             match daytime {
                 Some(dt) => {
                     if spot.at_night(&dt) {
@@ -59,12 +58,17 @@ pub fn find_upcoming(spots: &Vec<Spot>, daytime: &Option<DayTime>) -> Option<Spo
     return None;
 }
 
-pub fn find_current(spots: &Vec<Spot>, daytime: &Option<DayTime>) -> Option<Spot> {
+pub fn find_current(spots: &Vec<Spot>, daytime: Option<&DayTime>, now: DateTime) -> Option<Spot> {
     // count upcoming spots
     for spot in spots {
-        if spot.is_spottable() {
+        if spot.is_spottable(now) {
             match daytime {
-                Some(dt) => return match spot.at_night(&dt) { true => Some(spot.clone()), _ => None },
+                Some(dt) => {
+                    return match spot.at_night(&dt) {
+                        true => Some(spot.clone()),
+                        _ => None,
+                    }
+                }
                 _ => return Some(spot.clone()),
             }
         }
