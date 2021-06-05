@@ -22,7 +22,7 @@ impl DayTime {
         }
     }
     pub fn at_night(&self, datetime: &DateTime) -> bool {
-        datetime < &self.sunrise || datetime > &self.sunset
+        datetime.time() < self.sunrise.time() || datetime.time() > self.sunset.time()
     }
 }
 
