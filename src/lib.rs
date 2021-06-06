@@ -26,6 +26,7 @@ pub const LOADING: &str = "loading...";
 /// - `latitude`: latitude in decimal degrees of the ground station. required Range: -90..90
 /// - `longitude`: longitude in decimal degress of the ground station. required Range: -180..180
 /// - `altitude`: altitude in meters of the ground station. optional. Range: 0..10000
+/// - `n`: number of spotting events to fetch (<=100)
 /// - `poll_mins`: Update interval:
 ///     - `> 0`: duration of poll period in minutes (`90` is recommended)
 ///     - `= 0`: thread will terminate after the first successful update.
@@ -36,11 +37,11 @@ pub const LOADING: &str = "loading...";
 ///    ```rust
 ///     pub type Receiver = std::sync::mpsc::Receiver<Result<open_notify::Spot, String>>;
 ///    ```
-pub fn init(latitude: f64, longitude: f64, altitude: f64, poll_mins: u64) -> Receiver {
+pub fn init(latitude: f64, longitude: f64, altitude: f64, n: u8, poll_mins: u64) -> Receiver {
     // generate correct request URL depending on city is id or name
     let url = format!(
-        "http://api.open-notify.org/iss/v1/?lat={}&lon={}&altitude={}&n=10",
-        latitude, longitude, altitude
+        "http://api.open-notify.org/iss/v1/?lat={}&lon={}&altitude={}&n={}",
+        latitude, longitude, altitude, n
     );
     // fork thread that continuously fetches ISS spotting updates every <poll_mins> minutes
     let period = time::Duration::from_secs(60 * poll_mins);
@@ -106,17 +107,15 @@ pub fn update(receiver: &Receiver) -> Option<Result<Vec<Spot>, String>> {
 /// - `latitude`: latitude in decimal degrees of the ground station. required Range: -90..90
 /// - `longitude`: longitude in decimal degress of the ground station. required Range: -180..180
 /// - `altitude`: altitude in meters of the ground station. optional. Range: 0..10000
-/// - `poll_mins`: Update interval:
-///     - `> 0`: duration of poll period in minutes (`10` is recommended)
-///     - `= 0`: thread will terminate after the first successful update.
+/// - `n`: number of spotting events to fetch (<=100)
 /// #### Return value
 /// - ⇒ `Ok(Vec<Spot>)`: vector of upcoming spotting events
 ///     (see also [*open-notify* documentation](https://open-notify-api.readthedocs.io/en/latest/iss_pass.html) for details)
 /// - ⇒ `Err(String)`: Error message about any occured http or json issue
 ///         - e.g. `500 Internal Server Error"
 ///         - some json parser error message if response from open-notify.org could not be parsed
-pub async fn spot(latitude: f64, longitude: f64, altitude: f64) -> Result<Vec<Spot>, String> {
-    let r = init(latitude, longitude, altitude, 0);
+pub async fn spot(latitude: f64, longitude: f64, altitude: f64, n: u8) -> Result<Vec<Spot>, String> {
+    let r = init(latitude, longitude, altitude, n, 0);
     loop {
         match update(&r) {
             Some(response) => match response {
@@ -140,16 +139,14 @@ pub mod blocking {
     /// - `latitude`: latitude in decimal degrees of the ground station. required Range: -90..90
     /// - `longitude`: longitude in decimal degress of the ground station. required Range: -180..180
     /// - `altitude`: altitude in meters of the ground station. optional. Range: 0..10000
-    /// - `poll_mins`: Update interval:
-    ///     - `> 0`: duration of poll period in minutes (`10` is recommended)
-    ///     - `= 0`: thread will terminate after the first successful update.
+    /// - `n`: number of spotting events to fetch (<=100)
     /// #### Return value
     /// - ⇒ `Ok(Vec<Spot>)`: vector of upcoming spotting events
     /// - ⇒ `Err(String)`: Error message about any occured http or json issue
     ///         - e.g. `500 Internal Server Error"
     ///         - some json parser error message if response from open-notify.org could not be parsed
-    pub fn spot(latitude: f64, longitude: f64, altitude: f64) -> Result<Vec<Spot>, String> {
+    pub fn spot(latitude: f64, longitude: f64, altitude: f64, n: u8) -> Result<Vec<Spot>, String> {
         // wait for result
-        executor::block_on(super::spot(latitude, longitude, altitude))
+        executor::block_on(super::spot(latitude, longitude, altitude, n))
     }
 }

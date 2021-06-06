@@ -5,7 +5,7 @@ use chrono::TimeZone;
 #[test]
 fn test_spot() {
     let now = chrono::Local::now();
-    match blocking::spot(52.520008, 13.404954, 0.0) {
+    match blocking::spot(52.520008, 13.404954, 0.0, 100) {
         Ok(spots) => match find_upcoming(&spots, None, now) {
             Some(upcoming) => {
                 println!("{}", upcoming.risetime);
@@ -60,10 +60,6 @@ fn alltime() -> DayTime {
     }
 }
 
-fn now() -> DateTime {
-    chrono::Local::now()
-}
-
 #[test]
 fn test_daytime_many() {
     let s = spots(
@@ -81,15 +77,12 @@ fn test_daytime_many() {
     );
     assert!(
         find_upcoming(&s, Some(&daytime()), time("01.06.2021 13:00")).is_some(),
-        now()
     );
     assert!(
         find_upcoming(&s, Some(&daytime()), time("01.06.2021 23:00")).is_some(),
-        now()
     );
     assert!(
         find_upcoming(&s, Some(&alltime()), time("01.06.2021 13:00")).is_none(),
-        now()
     );
 }
 
@@ -99,10 +92,8 @@ fn test_daytime_one() {
 
     assert!(
         find_upcoming(&s, Some(&daytime()), time("31.05.2021 13:00")).is_some(),
-        now()
     );
     assert!(
         find_upcoming(&s, Some(&daytime()), time("01.06.2021 13:00")).is_none(),
-        now()
     );
 }
